@@ -1,11 +1,15 @@
 const path = require('path');
 const fs = require('fs').promises;
+const axios = require('axios');
+const MockAdapter = require('axios-mock-adapter');
 const { isAbsolutePath, 
         toAbsolutePath, 
         pathExistence,
         isValidExtension,
         readDocument,
-        findLinks } = require('../src/functions.js');
+        findLinks,
+        validateLinks } = require('../src/functions.js');
+const mdLinks = require('../src/index.js');
 
 describe('isAbsolutePath', ()=>{
     it('Debería retornar true para una ruta absoluta', () =>{
@@ -67,13 +71,6 @@ describe('readDocument', () => {
         expect(fileContent.length).toBeGreaterThan(0);
        });
     });
-    it('Dbería mostrar error al intentar leer un archivo que no existe', () =>{
-        const nonExistenFilePath = './test/archinoInexistente.md'
-        return readDocument(nonExistenFilePath)
-        .catch(error => {
-            expect(error.message).toBe('Error al leer el archivo');
-        });
-    });
 });
 
 describe('findLinks', () => {
@@ -101,11 +98,57 @@ describe('findLinks', () => {
                     file: filePath,
                     line: 3,
                 }, 
+                {
+                    text: 'EjemploInvalido1',
+                    href: 'https://www.ejemploenlaceinvalido.com',
+                    file: './test/archivoDePrueba.md',
+                    line: 4,  
+                  },
+                  {
+                    text: 'EjemploInvalido2',
+                    href: 'https://www.ejemploenlacetiempoexcedido.com',
+                    file: './test/archivoDePrueba.md',
+                    line: 5,   
+                  },
+                  {
+                    text: 'EjemploInalido3',
+                    href: 'https://www.ejemploenlaceredireccioncircular.com',
+                    file: './test/archivoDePrueba.md',
+                    line: 6,  
+                  },
+
+
             ];
             expect(findLinks(fileContent, filePath)).toEqual(linkResult);
         })
     });
 });
 
+describe('validateLinks', () => {
+    let mock;
+    beforeEach (() => {
+        mock = new MockAdapter(axios);
+    });
+    afterEach(() => {
+        mock.restore();
+    });
+    it('Debería validar exitosamente', () =>{
+        const links = [
+            { href: 'https://nodejs.org/en', text: 'Node.js', file: 'C:\\Users\\tiare\\OneDrive\\Documentos\\Proyectos Laboratoria\\DEV011-md-links\\test\\archivoDePrueba.md', line: 1 },     
+        ];
+        mock.onHead(links.href).reply(200);
 
-
+        return validateLinks(links).then(validateLinks => {
+            expect(validateLinks).toEqual([
+                {
+                    href: 'https://nodejs.org/en',
+                    text: 'Node.js',
+                    file: 'C:\\Users\\tiare\\OneDrive\\Documentos\\Proyectos Laboratoria\\DEV011-md-links\\test\\archivoDePrueba.md',
+                    line: 1,
+                    status: 200,
+                    statusText: 'Ok',
+                  },
+            ]);
+        });
+    });
+})

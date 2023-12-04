@@ -3,15 +3,16 @@ const { isAbsolutePath,
   pathExistence, 
   isValidExtension, 
   readDocument, 
-  findLinks } = require('./functions');
+  findLinks,
+  validateLinks, } = require('./functions');
 
       //-----Función principal-----//
-const mdLinks = (files) => {
+const mdLinks = (files, options = { validate: false }) => {
   return new Promise((resolve, reject)=> {
 // Validar la ruta absoluta
-const absoluteDefault = isAbsolutePath(files)    
+const isDefaultPath = isAbsolutePath(files)    
 // Convertir la ruta a absoluta
-const absolutePath = absoluteDefault ? files : toAbsolutePath(files)
+const absolutePath = isDefaultPath ? files : toAbsolutePath(files)
 // Comprobar que la ruta existe en el computador
     pathExistence(absolutePath)
     .then(() => {
@@ -22,21 +23,25 @@ const absolutePath = absoluteDefault ? files : toAbsolutePath(files)
 // Leer el contenido del archivo
   return readDocument(absolutePath);
       })
-// Encontrar y Extraer links    
+// Encontrar y Extraer links
       .then(fileContent => {
-        console.log('Contenido del archivo:', fileContent);
         const links = findLinks(fileContent, absolutePath);
-        console.log(links);
+// Validar links
+       if (options.validate) {
+        validateLinks(links)
+        .then(validateLinks => {
+          resolve(validateLinks);
+        })
+        .catch(error => {
+          console.error(error.message);
+          reject(error);
+        });
+       } else{
         resolve(links);
+       }
       })
-      .catch(error => {
-        console.error(error.message);
-        reject (error);
-      });
-  
-  
-  }); 
 
+  });
 };
 
 
