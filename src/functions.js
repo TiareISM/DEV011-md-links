@@ -1,8 +1,6 @@
 const path = require('path');
 const fs = require('fs').promises;
 const axios = require('axios');
-//Obtener la ruta del archivo desde los argumentos de la línea de comandos
-//const filePath = process.argv[2];
 
 // Función para validar que la ruta es absoluta
 const isAbsolutePath = (route) => path.isAbsolute(route);
@@ -62,24 +60,31 @@ const findLinks = (fileContent, path) => {
 // Función para validar los links
 const validateLinks = (links) => {
   const validation = links.map(link => {
-    return axios.head(link.href)
+    return axios.get(link.href)
     .then(response => {
       return {
         ...link,
         status: response.status,
-        statusText: 'Ok',  
+        statusText: response.status >= 200 && response.status < 400 ? 'Ok' : 'Fail',  
       };
     })
     .catch(error => {
       return {
         ...link,
-        status: 0,
+        status: error.response ? error.response.status : 0,
         statusText: 'Fail',
       };
     });
 });
 return Promise.all(validation);
 };
+
+// Función para obtener estadísticas
+const getStats = (links) => {
+  const totalLinks = links.length;
+  const uniqueLinks = new Set(links.map(link=> link.href)).size;
+  return { total: totalLinks, unique: uniqueLinks };
+}
 
 
 module.exports = {
@@ -90,4 +95,5 @@ module.exports = {
   readDocument,
   findLinks,
   validateLinks,
+  getStats,
 };

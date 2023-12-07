@@ -4,10 +4,11 @@ const { isAbsolutePath,
   isValidExtension, 
   readDocument, 
   findLinks,
-  validateLinks, } = require('./functions');
+  validateLinks, 
+  getStats, } = require('./functions');
 
       //-----Función principal-----//
-const mdLinks = (files, options = { validate: false }) => {
+const mdLinks = (files, options = { validate: false, stats: false }) => {
   return new Promise((resolve, reject)=> {
 // Validar la ruta absoluta
 const isDefaultPath = isAbsolutePath(files)    
@@ -27,23 +28,34 @@ const absolutePath = isDefaultPath ? files : toAbsolutePath(files)
       .then(fileContent => {
         const links = findLinks(fileContent, absolutePath);
 // Validar links
-       if (options.validate) {
-        validateLinks(links)
-        .then(validateLinks => {
-          resolve(validateLinks);
-        })
-        .catch(error => {
-          console.error(error.message);
-          reject(error);
-        });
-       } else{
-        resolve(links);
-       }
-      })
-
+if (options.validate) {
+  validateLinks(links)
+  .then((validatedLinks) => {
+// Obtener stats
+   if (options.stats) {
+    const statsResult = getStats(validatedLinks);
+    resolve({ links: validatedLinks, stats: statsResult})
+   } else {
+    resolve(validatedLinks);
+   }
+  })
+  .catch((error) => {
+    console.error(error.message);
+    reject(error);
   });
-};
+ } else{
+  if (options.stats) {
+    const statsResult = getStats(links);
+    resolve({ links: links, stats: statsResult });
+  } else {
+    resolve(links);
+  }
+  
+ }
+})
 
+});
+};
 
 
 

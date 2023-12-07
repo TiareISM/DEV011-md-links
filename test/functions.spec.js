@@ -8,8 +8,8 @@ const { isAbsolutePath,
         isValidExtension,
         readDocument,
         findLinks,
-        validateLinks } = require('../src/functions.js');
-const mdLinks = require('../src/index.js');
+        validateLinks,
+        getStats } = require('../src/functions.js');
 
 describe('isAbsolutePath', ()=>{
     it('Debería retornar true para una ruta absoluta', () =>{
@@ -20,7 +20,7 @@ describe('isAbsolutePath', ()=>{
         const relativePath = 'docs/04-milestone.md';
         expect(isAbsolutePath(relativePath)).toBe(false);
     });
-})
+});
 
 describe('toAbsolutePath', () =>{
     it('Si la ruta es absoluta, retornar la ruta sin cambios',() =>{
@@ -31,8 +31,8 @@ describe('toAbsolutePath', () =>{
         const relativePath = 'docs/04-milestone.md';
         const expectedAbsolutePath = path.resolve(relativePath);
         expect(toAbsolutePath(relativePath)).toBe(expectedAbsolutePath);
-    })
-})
+    });
+});
 
 describe('pathExistence', () => {
     it('Debería pasar a una ruta existente', () => {
@@ -46,7 +46,7 @@ describe('pathExistence', () => {
             expect(error.message).toBe('La ruta no existe');
         });
     });
-})
+});
 
 describe('isValidExtension',() => {
     it('isValidExtension retorna true si el archivo tiene la extensión .md', () => {
@@ -60,7 +60,7 @@ describe('isValidExtension',() => {
         const resultado = isValidExtension(archivo);
         expect(resultado).toBe(false);
       });
-})
+});
 
 describe('readDocument', () => {
     const filePath = './test/archivoDePrueba.md';
@@ -70,6 +70,10 @@ describe('readDocument', () => {
         expect(typeof fileContent).toBe('string');
         expect(fileContent.length).toBeGreaterThan(0);
        });
+    });
+    it('Debería mostrar error al leer el contenido del archivo', () => {
+        const invalidFilePath = './ruta/falsa.md';
+        return expect(readDocument(invalidFilePath)).rejects.toThrowError('Error al leer el archivo');
     });
 });
 
@@ -100,24 +104,22 @@ describe('findLinks', () => {
                 }, 
                 {
                     text: 'EjemploInvalido1',
-                    href: 'https://www.ejemploenlaceinvalido.com',
-                    file: './test/archivoDePrueba.md',
+                    href: 'https://www.ejemploenlaceinvalido444.com',
+                    file: filePath,
                     line: 4,  
                   },
                   {
                     text: 'EjemploInvalido2',
-                    href: 'https://www.ejemploenlacetiempoexcedido.com',
-                    file: './test/archivoDePrueba.md',
+                    href: 'https://www.ejemploenlacetiempoexcedido555.com',
+                    file: filePath,
                     line: 5,   
                   },
                   {
                     text: 'EjemploInalido3',
-                    href: 'https://www.ejemploenlaceredireccioncircular.com',
-                    file: './test/archivoDePrueba.md',
+                    href: 'https://www.ejemploenlaceredireccioncircular666.com',
+                    file: filePath,
                     line: 6,  
                   },
-
-
             ];
             expect(findLinks(fileContent, filePath)).toEqual(linkResult);
         })
@@ -136,7 +138,7 @@ describe('validateLinks', () => {
         const links = [
             { href: 'https://nodejs.org/en', text: 'Node.js', file: 'C:\\Users\\tiare\\OneDrive\\Documentos\\Proyectos Laboratoria\\DEV011-md-links\\test\\archivoDePrueba.md', line: 1 },     
         ];
-        mock.onHead(links.href).reply(200);
+        mock.onGet(links[0].href).reply(200);
 
         return validateLinks(links).then(validateLinks => {
             expect(validateLinks).toEqual([
@@ -151,4 +153,35 @@ describe('validateLinks', () => {
             ]);
         });
     });
-})
+    it('Debería manejar el error de validación con 404', () => {
+        const links = [
+            { href: 'https://nodejs.org/en', text: 'Node.js', file: 'path/to/file.md', line: 1 },
+        ];
+        mock.onGet(links[0].href).reply(404);
+
+        return validateLinks(links).then(validatedLinks => {
+            expect(validatedLinks).toEqual([
+                {
+                    href: 'https://nodejs.org/en',
+                    text: 'Node.js',
+                    file: 'path/to/file.md',
+                    line: 1,
+                    status: 404,
+                    statusText: 'Fail',
+                },
+            ]);
+        });
+    });
+});
+
+describe('getStats', () => {
+    it('Debería calcula la estadística correctamente', () => {
+        const links = [
+            { href: 'https://nodejs.org/en'},
+            { href: 'https://www.google.com/'},
+            { href: 'https://www.wikipedia.org/'}
+        ];
+        const stats = getStats(links);
+        expect(stats).toEqual({ total: 3, unique: 3 });
+    });
+});
