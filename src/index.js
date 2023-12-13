@@ -3,15 +3,19 @@ const { isAbsolutePath,
   pathExistence, 
   isValidExtension, 
   readDocument, 
-  findLinks } = require('./functions');
+  findLinks,
+  validateLinks, 
+  getStats, } = require('./functions');
 
       //-----Función principal-----//
-const mdLinks = (files) => {
+const mdLinks = (files, options = { validate: false, stats: false }) => {
+  console.log('mdLinks llamado con la siguiente ruta:', files);
   return new Promise((resolve, reject)=> {
 // Validar la ruta absoluta
-const absoluteDefault = isAbsolutePath(files)    
+const isDefaultPath = isAbsolutePath(files)    
 // Convertir la ruta a absoluta
-const absolutePath = absoluteDefault ? files : toAbsolutePath(files)
+const absolutePath = isDefaultPath ? files : toAbsolutePath(files)
+console.log(toAbsolutePath(files))
 // Comprobar que la ruta existe en el computador
     pathExistence(absolutePath)
     .then(() => {
@@ -22,23 +26,38 @@ const absolutePath = absoluteDefault ? files : toAbsolutePath(files)
 // Leer el contenido del archivo
   return readDocument(absolutePath);
       })
-// Encontrar y Extraer links    
+// Encontrar y Extraer links
       .then(fileContent => {
-        console.log('Contenido del archivo:', fileContent);
         const links = findLinks(fileContent, absolutePath);
-        console.log(links);
-        resolve(links);
-      })
-      .catch(error => {
-        console.error(error.message);
-        reject (error);
-      });
+// Validar links
+if (options.validate) {
+  validateLinks(links)
+  .then((validatedLinks) => {
+// Obtener stats
+   if (options.stats) {
+    const statsResult = getStats(validatedLinks);
+    resolve({ links: validatedLinks, stats: statsResult})
+   } else {
+    resolve(validatedLinks);
+   }
+  })
+  .catch((error) => {
+    console.error(error.message);
+    reject(error);
+  });
+ } else{
+  if (options.stats) {
+    const statsResult = getStats(links);
+    resolve({ links: links, stats: statsResult });
+  } else {
+    resolve(links);
+  }
   
-  
-  }); 
+ }
+})
 
+});
 };
-
 
 
 

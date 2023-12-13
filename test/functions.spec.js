@@ -1,11 +1,15 @@
 const path = require('path');
 const fs = require('fs').promises;
+const axios = require('axios');
+const MockAdapter = require('axios-mock-adapter');
 const { isAbsolutePath, 
         toAbsolutePath, 
         pathExistence,
         isValidExtension,
         readDocument,
-        findLinks } = require('../src/functions.js');
+        findLinks,
+        validateLinks,
+        getStats } = require('../src/functions.js');
 
 describe('isAbsolutePath', ()=>{
     it('Debería retornar true para una ruta absoluta', () =>{
@@ -16,7 +20,7 @@ describe('isAbsolutePath', ()=>{
         const relativePath = 'docs/04-milestone.md';
         expect(isAbsolutePath(relativePath)).toBe(false);
     });
-})
+});
 
 describe('toAbsolutePath', () =>{
     it('Si la ruta es absoluta, retornar la ruta sin cambios',() =>{
@@ -27,8 +31,8 @@ describe('toAbsolutePath', () =>{
         const relativePath = 'docs/04-milestone.md';
         const expectedAbsolutePath = path.resolve(relativePath);
         expect(toAbsolutePath(relativePath)).toBe(expectedAbsolutePath);
-    })
-})
+    });
+});
 
 describe('pathExistence', () => {
     it('Debería pasar a una ruta existente', () => {
@@ -42,7 +46,7 @@ describe('pathExistence', () => {
             expect(error.message).toBe('La ruta no existe');
         });
     });
-})
+});
 
 describe('isValidExtension',() => {
     it('isValidExtension retorna true si el archivo tiene la extensión .md', () => {
@@ -56,7 +60,7 @@ describe('isValidExtension',() => {
         const resultado = isValidExtension(archivo);
         expect(resultado).toBe(false);
       });
-})
+});
 
 describe('readDocument', () => {
     const filePath = './test/archivoDePrueba.md';
@@ -67,12 +71,9 @@ describe('readDocument', () => {
         expect(fileContent.length).toBeGreaterThan(0);
        });
     });
-    it('Dbería mostrar error al intentar leer un archivo que no existe', () =>{
-        const nonExistenFilePath = './test/archinoInexistente.md'
-        return readDocument(nonExistenFilePath)
-        .catch(error => {
-            expect(error.message).toBe('Error al leer el archivo');
-        });
+    it('Debería mostrar error al leer el contenido del archivo', () => {
+        const invalidFilePath = './ruta/falsa.md';
+        return expect(readDocument(invalidFilePath)).rejects.toThrowError('Error al leer el archivo');
     });
 });
 
@@ -101,11 +102,86 @@ describe('findLinks', () => {
                     file: filePath,
                     line: 3,
                 }, 
+                {
+                    text: 'EjemploInvalido1',
+                    href: 'https://www.ejemploenlaceinvalido444.com',
+                    file: filePath,
+                    line: 4,  
+                  },
+                  {
+                    text: 'EjemploInvalido2',
+                    href: 'https://www.ejemploenlacetiempoexcedido555.com',
+                    file: filePath,
+                    line: 5,   
+                  },
+                  {
+                    text: 'EjemploInalido3',
+                    href: 'https://www.ejemploenlaceredireccioncircular666.com',
+                    file: filePath,
+                    line: 6,  
+                  },
             ];
             expect(findLinks(fileContent, filePath)).toEqual(linkResult);
         })
     });
 });
 
+describe('validateLinks', () => {
+    let mock;
+    beforeEach (() => {
+        mock = new MockAdapter(axios);
+    });
+    afterEach(() => {
+        mock.restore();
+    });
+    it('Debería validar exitosamente', () =>{
+        const links = [
+            { href: 'https://nodejs.org/en', text: 'Node.js', file: 'C:\\Users\\tiare\\OneDrive\\Documentos\\Proyectos Laboratoria\\DEV011-md-links\\test\\archivoDePrueba.md', line: 1 },     
+        ];
+        mock.onGet(links[0].href).reply(200);
 
+        return validateLinks(links).then(validateLinks => {
+            expect(validateLinks).toEqual([
+                {
+                    href: 'https://nodejs.org/en',
+                    text: 'Node.js',
+                    file: 'C:\\Users\\tiare\\OneDrive\\Documentos\\Proyectos Laboratoria\\DEV011-md-links\\test\\archivoDePrueba.md',
+                    line: 1,
+                    status: 200,
+                    statusText: 'Ok',
+                  },
+            ]);
+        });
+    });
+    it('Debería manejar el error de validación con 404', () => {
+        const links = [
+            { href: 'https://nodejs.org/en', text: 'Node.js', file: 'path/to/file.md', line: 1 },
+        ];
+        mock.onGet(links[0].href).reply(404);
 
+        return validateLinks(links).then(validatedLinks => {
+            expect(validatedLinks).toEqual([
+                {
+                    href: 'https://nodejs.org/en',
+                    text: 'Node.js',
+                    file: 'path/to/file.md',
+                    line: 1,
+                    status: 404,
+                    statusText: 'Fail',
+                },
+            ]);
+        });
+    });
+});
+
+describe('getStats', () => {
+    it('Debería calcula la estadística correctamente', () => {
+        const links = [
+            { href: 'https://nodejs.org/en'},
+            { href: 'https://www.google.com/'},
+            { href: 'https://www.wikipedia.org/'}
+        ];
+        const stats = getStats(links);
+        expect(stats).toEqual({ total: 3, unique: 3 });
+    });
+});
