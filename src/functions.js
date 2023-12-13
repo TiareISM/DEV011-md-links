@@ -1,7 +1,6 @@
 const path = require('path');
 const fs = require('fs').promises;
-//Obtener la ruta del archivo desde los argumentos de la línea de comandos
-//const filePath = process.argv[2];
+const axios = require('axios');
 
 // Función para validar que la ruta es absoluta
 const isAbsolutePath = (route) => path.isAbsolute(route);
@@ -15,8 +14,12 @@ const toAbsolutePath = (route) => {
 const pathExistence = (path) => {
   console.log('Comprobando existencia', path);
   return fs.access(path)
-  .catch(() => {
-    throw new Error('La ruta no existe');
+  .catch((error) => {
+    if (error.code === 'ENOENT') {
+      throw new Error('La ruta no existe');
+    } else {
+      throw error;
+    }   
   });
 };
 
@@ -58,6 +61,37 @@ const findLinks = (fileContent, path) => {
   return links
 };
 
+// Función para validar los links
+const validateLinks = (links) => {
+  const validation = links.map(link => {
+    return axios.get(link.href)
+    .then(response => {
+      return {
+        ...link,
+        status: response.status,
+        statusText: response.status >= 200 && response.status < 400 ? 'Ok' : 'Fail',  
+      };
+    })
+    .catch(error => {
+      return {
+        ...link,
+        status: error.response ? error.response.status : 0,
+        statusText: 'Fail',
+      };
+    });
+});
+return Promise.all(validation);
+};
+
+// Función para obtener estadísticas
+const getStats = (links) => {
+  const totalLinks = links.length;
+  const uniqueLinks = new Set(links.map(link=> link.href)).size;
+  return { total: totalLinks, unique: uniqueLinks };
+}
+
+
+
 module.exports = {
   isAbsolutePath,
   toAbsolutePath,
@@ -65,4 +99,6 @@ module.exports = {
   isValidExtension,
   readDocument,
   findLinks,
+  validateLinks,
+  getStats,
 };
