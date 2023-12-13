@@ -14,8 +14,12 @@ const toAbsolutePath = (route) => {
 const pathExistence = (path) => {
   console.log('Comprobando existencia', path);
   return fs.access(path)
-  .catch(() => {
-    throw new Error('La ruta no existe');
+  .catch((error) => {
+    if (error.code === 'ENOENT') {
+      throw new Error('La ruta no existe');
+    } else {
+      throw error;
+    }   
   });
 };
 
@@ -85,6 +89,7 @@ const getStats = (links) => {
   const uniqueLinks = new Set(links.map(link=> link.href)).size;
   return { total: totalLinks, unique: uniqueLinks };
 }
+
 
 
 module.exports = {

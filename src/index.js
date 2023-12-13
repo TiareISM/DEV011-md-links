@@ -9,11 +9,13 @@ const { isAbsolutePath,
 
       //-----Función principal-----//
 const mdLinks = (files, options = { validate: false, stats: false }) => {
+  console.log('mdLinks llamado con la siguiente ruta:', files);
   return new Promise((resolve, reject)=> {
 // Validar la ruta absoluta
 const isDefaultPath = isAbsolutePath(files)    
 // Convertir la ruta a absoluta
 const absolutePath = isDefaultPath ? files : toAbsolutePath(files)
+console.log(toAbsolutePath(files))
 // Comprobar que la ruta existe en el computador
     pathExistence(absolutePath)
     .then(() => {

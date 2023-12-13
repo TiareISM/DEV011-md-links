@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 const mdLinks = require ('./index');
 const yargs = require ('yargs');
 const path = process.argv[2];
@@ -13,6 +14,8 @@ const options = yargs
     type: 'boolean',
   })
   .argv;
+
+  console.log('Ejecutando md-links con la ruta:', path);
 
 
 mdLinks(path, options)
