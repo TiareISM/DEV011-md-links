@@ -32,6 +32,10 @@ Podrás instalar esta librería `md-links` utilizando NPM (Node Package Manager)
 2. `--stats` mostrará estadísticas simples sobre los enlaces encontrados.
 3. `--validate` `--stats` uso combinado, mostrará estadísticas sobre los enlaces y también los validará.
 
+`NOTA:` Este proyecto utiliza barras inclinadas (/) para representar rutas de archivos y directorios. Al utilizar este proyecto en entornos Windows, asegúrate de utilizar barras inclinadas (/) en lugar de barras invertidas (\) al especificar rutas de archivos o directorios.
+
+Ejemplo: md-links C:/ruta/a/tu/archivo.md
+
 ### Diagrama de Flujo
 
 Este diagrama de Flujo ilustra el proceso y la lógica de `md-links`.
