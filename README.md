@@ -7,7 +7,7 @@
 Md-Links es una librería en Node.js diseña para analizar enlaces dentro de archivos [Markdown].
 Este proyecto ofrece dos formas de integración: como módulo instalable desde GitHub, permitiendo su incorporación en otros proyectos, y como una interfaz de línea de comandos (CLI) brindando la flexibilidad de ser utilizada desde la terminal.
 
-### Características Destacas:
+### Características Destacadas:
 
 - Validación de Enlaces: `md-links` facilita la tarea de verificar la validez de los enlaces presentes en documentos `Markdown`.
 - Interacción con el Sistema de Archivos: Aprovechando la capacidad de [Node.js], la librería proporciona funciones para buscar y leer archivos, ofreciendo una gestión eficiente de documentos.
@@ -32,7 +32,8 @@ Podrás instalar esta librería `md-links` utilizando NPM (Node Package Manager)
 2. `--stats` mostrará estadísticas simples sobre los enlaces encontrados.
 3. `--validate` `--stats` uso combinado, mostrará estadísticas sobre los enlaces y también los validará.
 
-`NOTA:` Este proyecto utiliza barras inclinadas (/) para representar rutas de archivos y directorios. Al utilizar este proyecto en entornos Windows, asegúrate de utilizar barras inclinadas (/) en lugar de barras invertidas (\) al especificar rutas de archivos o directorios.
+`NOTA:` Este proyecto utiliza barras inclinadas (/) para representar rutas de archivos y directorios. Al utilizar este proyecto en entornos Windows, asegúrate de utilizar barras inclinadas (/) en lugar de barras invertidas
+( \ ) al especificar rutas de archivos o directorios.
 
 Ejemplo: md-links C:/ruta/a/tu/archivo.md
 

@@ -97,8 +97,8 @@ describe('findLinks', () => {
                     line: 2,
                 },
                 {
-                    text: 'Wikipedia',
-                    href: 'https://www.wikipedia.org/',
+                    text: 'MDN',
+                    href: 'https://developer.mozilla.org/es/',
                     file: filePath,
                     line: 3,
                 }, 
